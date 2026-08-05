@@ -1,40 +1,30 @@
 <Activity mc:Ignorable="sap sap2010" x:Class="Main"
- this:Main.in_SourceWorkbook="Data\Source.xlsx"
- this:Main.in_SourceSheet="Sheet1"
- this:Main.in_SourceMatchColumn="CustomerName"
- this:Main.in_ReferenceWorkbook="Data\Reference.xlsx"
- this:Main.in_ReferenceSheet="Sheet1"
- this:Main.in_ReferenceMatchColumn="CustomerName"
- this:Main.in_OutputWorkbook="Output\MatchResults.xlsx"
- this:Main.in_OutputSheet="MatchResults"
+ this:Main.in_SourceValue="ACME FOODS LTD."
+ this:Main.in_ReferenceValues="Acme Foods Limited;Zenith Logistics LLC;Nordwind Handels GmbH;Sakura Trading Co;Acme Fabrics Limited"
+ this:Main.in_Delimiter=";"
  this:Main.in_AutoMatchThreshold="90"
  this:Main.in_ReviewThreshold="75"
  xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
- xmlns:excel="clr-namespace:UiPath.Excel.Activities;assembly=UiPath.Excel.Activities"
  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
  xmlns:s="clr-namespace:System;assembly=System.Private.CoreLib"
  xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
  xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
  xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib"
  xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=System.Private.CoreLib"
- xmlns:sd="clr-namespace:System.Data;assembly=System.Data.Common"
  xmlns:this="clr-namespace:"
  xmlns:ui="http://schemas.uipath.com/workflow/activities"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <x:Members>
-    <x:Property Name="in_SourceWorkbook" Type="InArgument(x:String)" />
-    <x:Property Name="in_SourceSheet" Type="InArgument(x:String)" />
-    <x:Property Name="in_SourceMatchColumn" Type="InArgument(x:String)" />
-    <x:Property Name="in_ReferenceWorkbook" Type="InArgument(x:String)" />
-    <x:Property Name="in_ReferenceSheet" Type="InArgument(x:String)" />
-    <x:Property Name="in_ReferenceMatchColumn" Type="InArgument(x:String)" />
-    <x:Property Name="in_OutputWorkbook" Type="InArgument(x:String)" />
-    <x:Property Name="in_OutputSheet" Type="InArgument(x:String)" />
+    <x:Property Name="in_SourceValue" Type="InArgument(x:String)" />
+    <x:Property Name="in_ReferenceValues" Type="InArgument(x:String)" />
+    <x:Property Name="in_Delimiter" Type="InArgument(x:String)" />
     <x:Property Name="in_AutoMatchThreshold" Type="InArgument(x:Double)" />
     <x:Property Name="in_ReviewThreshold" Type="InArgument(x:Double)" />
-    <x:Property Name="out_AutoMatchedCount" Type="OutArgument(x:Int32)" />
-    <x:Property Name="out_NeedsReviewCount" Type="OutArgument(x:Int32)" />
-    <x:Property Name="out_NoMatchCount" Type="OutArgument(x:Int32)" />
+    <x:Property Name="out_MatchedValue" Type="OutArgument(x:String)" />
+    <x:Property Name="out_Score" Type="OutArgument(x:Double)" />
+    <x:Property Name="out_Outcome" Type="OutArgument(x:String)" />
+    <x:Property Name="out_RunnerUpValue" Type="OutArgument(x:String)" />
+    <x:Property Name="out_Margin" Type="OutArgument(x:Double)" />
   </x:Members>
   <VisualBasic.Settings>
     <x:Null />
@@ -44,12 +34,9 @@
     <sco:Collection x:TypeArguments="x:String">
       <x:String>System</x:String>
       <x:String>System.Collections.Generic</x:String>
-      <x:String>System.Data</x:String>
       <x:String>System.Linq</x:String>
       <x:String>UiPath.Core</x:String>
       <x:String>UiPath.Core.Activities</x:String>
-      <x:String>UiPath.Excel</x:String>
-      <x:String>UiPath.Excel.Activities</x:String>
       <x:String>FuzzyMatch</x:String>
     </sco:Collection>
   </TextExpression.NamespacesForImplementation>
@@ -57,83 +44,73 @@
     <sco:Collection x:TypeArguments="AssemblyReference">
       <AssemblyReference>System</AssemblyReference>
       <AssemblyReference>System.Activities</AssemblyReference>
-      <AssemblyReference>System.Data.Common</AssemblyReference>
       <AssemblyReference>System.Linq</AssemblyReference>
       <AssemblyReference>UiPath.System.Activities</AssemblyReference>
-      <AssemblyReference>UiPath.Excel.Activities</AssemblyReference>
     </sco:Collection>
   </TextExpression.ReferencesForImplementation>
   <Sequence DisplayName="Fuzzy Match Process" sap2010:WorkflowViewState.IdRef="Sequence_1">
     <Sequence.Variables>
-      <Variable x:TypeArguments="sd:DataTable" Name="dtSource" />
-      <Variable x:TypeArguments="sd:DataTable" Name="dtReference" />
-      <Variable x:TypeArguments="sd:DataTable" Name="dtResults" />
+      <Variable x:TypeArguments="x:String" Name="strSourceValue" />
+      <Variable x:TypeArguments="x:String" Name="strReferenceValues" />
+      <Variable x:TypeArguments="x:String" Name="strDelimiter" />
     </Sequence.Variables>
+    <Assign x:TypeArguments="x:String" DisplayName="Assign Source Value" sap2010:WorkflowViewState.IdRef="Assign_1">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">
+          <VisualBasicReference x:TypeArguments="x:String" ExpressionText="strSourceValue" />
+        </OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">
+          <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_SourceValue" />
+        </InArgument>
+      </Assign.Value>
+    </Assign>
+    <Assign x:TypeArguments="x:String" DisplayName="Assign Reference Values" sap2010:WorkflowViewState.IdRef="Assign_2">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">
+          <VisualBasicReference x:TypeArguments="x:String" ExpressionText="strReferenceValues" />
+        </OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">
+          <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_ReferenceValues" />
+        </InArgument>
+      </Assign.Value>
+    </Assign>
+    <Assign x:TypeArguments="x:String" DisplayName="Assign Delimiter" sap2010:WorkflowViewState.IdRef="Assign_3">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">
+          <VisualBasicReference x:TypeArguments="x:String" ExpressionText="strDelimiter" />
+        </OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">
+          <VisualBasicValue x:TypeArguments="x:String" ExpressionText="If(String.IsNullOrEmpty(in_Delimiter), &quot;;&quot;, in_Delimiter)" />
+        </InArgument>
+      </Assign.Value>
+    </Assign>
     <ui:LogMessage DisplayName="Log Run Start" Level="Info" sap2010:WorkflowViewState.IdRef="LogMessage_1">
       <ui:LogMessage.Message>
         <InArgument x:TypeArguments="x:Object">
-          <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;Fuzzy match started. Source: &quot; &amp; in_SourceWorkbook &amp; &quot; | Reference: &quot; &amp; in_ReferenceWorkbook &amp; &quot; | Auto-match >= &quot; &amp; in_AutoMatchThreshold.ToString() &amp; &quot;, review >= &quot; &amp; in_ReviewThreshold.ToString()" />
+          <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;Fuzzy match started. Source value: &quot;&quot;&quot; &amp; strSourceValue &amp; &quot;&quot;&quot; | Auto-match &gt;= &quot; &amp; in_AutoMatchThreshold.ToString() &amp; &quot;, review &gt;= &quot; &amp; in_ReviewThreshold.ToString()" />
         </InArgument>
       </ui:LogMessage.Message>
     </ui:LogMessage>
     <TryCatch DisplayName="Try Catch Fuzzy Match" sap2010:WorkflowViewState.IdRef="TryCatch_1">
       <TryCatch.Try>
         <Sequence DisplayName="Try" sap2010:WorkflowViewState.IdRef="Sequence_2">
-          <excel:ReadRange DisplayName="Read Source Workbook" AddHeaders="True" Range="" sap2010:WorkflowViewState.IdRef="ReadRange_1">
-            <excel:ReadRange.WorkbookPath>
-              <InArgument x:TypeArguments="x:String">
-                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_SourceWorkbook" />
-              </InArgument>
-            </excel:ReadRange.WorkbookPath>
-            <excel:ReadRange.SheetName>
-              <InArgument x:TypeArguments="x:String">
-                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_SourceSheet" />
-              </InArgument>
-            </excel:ReadRange.SheetName>
-            <excel:ReadRange.DataTable>
-              <OutArgument x:TypeArguments="sd:DataTable">
-                <VisualBasicReference x:TypeArguments="sd:DataTable" ExpressionText="dtSource" />
-              </OutArgument>
-            </excel:ReadRange.DataTable>
-          </excel:ReadRange>
-          <excel:ReadRange DisplayName="Read Reference Workbook" AddHeaders="True" Range="" sap2010:WorkflowViewState.IdRef="ReadRange_2">
-            <excel:ReadRange.WorkbookPath>
-              <InArgument x:TypeArguments="x:String">
-                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_ReferenceWorkbook" />
-              </InArgument>
-            </excel:ReadRange.WorkbookPath>
-            <excel:ReadRange.SheetName>
-              <InArgument x:TypeArguments="x:String">
-                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_ReferenceSheet" />
-              </InArgument>
-            </excel:ReadRange.SheetName>
-            <excel:ReadRange.DataTable>
-              <OutArgument x:TypeArguments="sd:DataTable">
-                <VisualBasicReference x:TypeArguments="sd:DataTable" ExpressionText="dtReference" />
-              </OutArgument>
-            </excel:ReadRange.DataTable>
-          </excel:ReadRange>
-          <ui:LogMessage DisplayName="Log Input Row Counts" Level="Info" sap2010:WorkflowViewState.IdRef="LogMessage_2">
-            <ui:LogMessage.Message>
-              <InArgument x:TypeArguments="x:Object">
-                <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;Read &quot; &amp; dtSource.Rows.Count.ToString() &amp; &quot; source row(s) and &quot; &amp; dtReference.Rows.Count.ToString() &amp; &quot; reference row(s).&quot;" />
-              </InArgument>
-            </ui:LogMessage.Message>
-          </ui:LogMessage>
-          <ui:InvokeWorkflowFile DisplayName="Invoke Fuzzy Matcher" WorkflowFileName="MatchRecords.cs" UnSafe="False" sap2010:WorkflowViewState.IdRef="InvokeWorkflowFile_1">
+          <ui:InvokeWorkflowFile DisplayName="Invoke Fuzzy Matcher" WorkflowFileName="MatchValue.cs" UnSafe="False" sap2010:WorkflowViewState.IdRef="InvokeWorkflowFile_1">
             <ui:InvokeWorkflowFile.Arguments>
               <scg:Dictionary x:TypeArguments="x:String, Argument">
-                <InArgument x:TypeArguments="sd:DataTable" x:Key="sourceTable">
-                  <VisualBasicValue x:TypeArguments="sd:DataTable" ExpressionText="dtSource" />
+                <InArgument x:TypeArguments="x:String" x:Key="sourceValue">
+                  <VisualBasicValue x:TypeArguments="x:String" ExpressionText="strSourceValue" />
                 </InArgument>
-                <InArgument x:TypeArguments="x:String" x:Key="sourceColumn">
-                  <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_SourceMatchColumn" />
+                <InArgument x:TypeArguments="x:String" x:Key="referenceValues">
+                  <VisualBasicValue x:TypeArguments="x:String" ExpressionText="strReferenceValues" />
                 </InArgument>
-                <InArgument x:TypeArguments="sd:DataTable" x:Key="referenceTable">
-                  <VisualBasicValue x:TypeArguments="sd:DataTable" ExpressionText="dtReference" />
-                </InArgument>
-                <InArgument x:TypeArguments="x:String" x:Key="referenceColumn">
-                  <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_ReferenceMatchColumn" />
+                <InArgument x:TypeArguments="x:String" x:Key="delimiter">
+                  <VisualBasicValue x:TypeArguments="x:String" ExpressionText="strDelimiter" />
                 </InArgument>
                 <InArgument x:TypeArguments="x:Double" x:Key="autoMatchThreshold">
                   <VisualBasicValue x:TypeArguments="x:Double" ExpressionText="in_AutoMatchThreshold" />
@@ -141,57 +118,43 @@
                 <InArgument x:TypeArguments="x:Double" x:Key="reviewThreshold">
                   <VisualBasicValue x:TypeArguments="x:Double" ExpressionText="in_ReviewThreshold" />
                 </InArgument>
-                <OutArgument x:TypeArguments="sd:DataTable" x:Key="Results">
-                  <VisualBasicReference x:TypeArguments="sd:DataTable" ExpressionText="dtResults" />
+                <OutArgument x:TypeArguments="x:String" x:Key="MatchedValue">
+                  <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MatchedValue" />
                 </OutArgument>
-                <OutArgument x:TypeArguments="x:Int32" x:Key="AutoMatched">
-                  <VisualBasicReference x:TypeArguments="x:Int32" ExpressionText="out_AutoMatchedCount" />
+                <OutArgument x:TypeArguments="x:Double" x:Key="Score">
+                  <VisualBasicReference x:TypeArguments="x:Double" ExpressionText="out_Score" />
                 </OutArgument>
-                <OutArgument x:TypeArguments="x:Int32" x:Key="NeedsReview">
-                  <VisualBasicReference x:TypeArguments="x:Int32" ExpressionText="out_NeedsReviewCount" />
+                <OutArgument x:TypeArguments="x:String" x:Key="Outcome">
+                  <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_Outcome" />
                 </OutArgument>
-                <OutArgument x:TypeArguments="x:Int32" x:Key="NoMatch">
-                  <VisualBasicReference x:TypeArguments="x:Int32" ExpressionText="out_NoMatchCount" />
+                <OutArgument x:TypeArguments="x:String" x:Key="RunnerUpValue">
+                  <VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_RunnerUpValue" />
+                </OutArgument>
+                <OutArgument x:TypeArguments="x:Double" x:Key="Margin">
+                  <VisualBasicReference x:TypeArguments="x:Double" ExpressionText="out_Margin" />
                 </OutArgument>
               </scg:Dictionary>
             </ui:InvokeWorkflowFile.Arguments>
           </ui:InvokeWorkflowFile>
-          <excel:WriteRange DisplayName="Write Match Results" AddHeaders="True" StartingCell="A1" sap2010:WorkflowViewState.IdRef="WriteRange_1">
-            <excel:WriteRange.WorkbookPath>
-              <InArgument x:TypeArguments="x:String">
-                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_OutputWorkbook" />
-              </InArgument>
-            </excel:WriteRange.WorkbookPath>
-            <excel:WriteRange.SheetName>
-              <InArgument x:TypeArguments="x:String">
-                <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_OutputSheet" />
-              </InArgument>
-            </excel:WriteRange.SheetName>
-            <excel:WriteRange.DataTable>
-              <InArgument x:TypeArguments="sd:DataTable">
-                <VisualBasicValue x:TypeArguments="sd:DataTable" ExpressionText="dtResults" />
-              </InArgument>
-            </excel:WriteRange.DataTable>
-          </excel:WriteRange>
-          <ui:LogMessage DisplayName="Log Match Summary" Level="Info" sap2010:WorkflowViewState.IdRef="LogMessage_3">
+          <ui:LogMessage DisplayName="Log Match Result" Level="Info" sap2010:WorkflowViewState.IdRef="LogMessage_2">
             <ui:LogMessage.Message>
               <InArgument x:TypeArguments="x:Object">
-                <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;Fuzzy match complete. Auto-matched: &quot; &amp; out_AutoMatchedCount.ToString() &amp; &quot; | Needs review: &quot; &amp; out_NeedsReviewCount.ToString() &amp; &quot; | No match: &quot; &amp; out_NoMatchCount.ToString() &amp; &quot;. Results written to &quot; &amp; in_OutputWorkbook" />
+                <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;Outcome: &quot; &amp; out_Outcome &amp; &quot; | Matched: &quot;&quot;&quot; &amp; out_MatchedValue &amp; &quot;&quot;&quot; | Score: &quot; &amp; out_Score.ToString() &amp; &quot; | Runner-up: &quot;&quot;&quot; &amp; out_RunnerUpValue &amp; &quot;&quot;&quot; | Margin: &quot; &amp; out_Margin.ToString()" />
               </InArgument>
             </ui:LogMessage.Message>
           </ui:LogMessage>
-          <If sap2010:WorkflowViewState.IdRef="If_1" DisplayName="If Any Row Needs Review">
+          <If sap2010:WorkflowViewState.IdRef="If_1" DisplayName="If Not Auto Matched">
             <If.Condition>
               <InArgument x:TypeArguments="x:Boolean">
-                <VisualBasicValue x:TypeArguments="x:Boolean" ExpressionText="out_NeedsReviewCount &gt; 0 OrElse out_NoMatchCount &gt; 0" />
+                <VisualBasicValue x:TypeArguments="x:Boolean" ExpressionText="out_Outcome &lt;&gt; &quot;AutoMatched&quot;" />
               </InArgument>
             </If.Condition>
             <If.Then>
               <Sequence DisplayName="Then" sap2010:WorkflowViewState.IdRef="Sequence_3">
-                <ui:LogMessage DisplayName="Log Review Required" Level="Warn" sap2010:WorkflowViewState.IdRef="LogMessage_4">
+                <ui:LogMessage DisplayName="Log Review Required" Level="Warn" sap2010:WorkflowViewState.IdRef="LogMessage_3">
                   <ui:LogMessage.Message>
                     <InArgument x:TypeArguments="x:Object">
-                      <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="(out_NeedsReviewCount + out_NoMatchCount).ToString() &amp; &quot; row(s) could not be auto-matched and need a human decision. See the Outcome column in &quot; &amp; in_OutputWorkbook" />
+                      <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;&quot;&quot;&quot; &amp; strSourceValue &amp; &quot;&quot;&quot; was not auto-matched (outcome: &quot; &amp; out_Outcome &amp; &quot;, score: &quot; &amp; out_Score.ToString() &amp; &quot;). A human decision is needed.&quot;" />
                     </InArgument>
                   </ui:LogMessage.Message>
                 </ui:LogMessage>
@@ -207,7 +170,7 @@
               <DelegateInArgument x:TypeArguments="s:Exception" Name="exception" />
             </ActivityAction.Argument>
             <Sequence DisplayName="Catch" sap2010:WorkflowViewState.IdRef="Sequence_4">
-              <ui:LogMessage DisplayName="Log Failure" Level="Error" sap2010:WorkflowViewState.IdRef="LogMessage_5">
+              <ui:LogMessage DisplayName="Log Failure" Level="Error" sap2010:WorkflowViewState.IdRef="LogMessage_4">
                 <ui:LogMessage.Message>
                   <InArgument x:TypeArguments="x:Object">
                     <VisualBasicValue x:TypeArguments="x:Object" ExpressionText="&quot;Fuzzy match failed: &quot; &amp; exception.GetType().Name &amp; &quot; - &quot; &amp; exception.Message" />
