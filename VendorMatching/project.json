@@ -1,0 +1,100 @@
+{
+  "name": "VendorMatching",
+  "projectId": "eceb408f-2c22-46b4-8ab5-b0718644e698",
+  "description": "Fuzzy matching of invoice vendor names against the SAP vendor master, with score breakdown and exception routing.",
+  "main": "Main.cs",
+  "dependencies": {
+    "UiPath.System.Activities": "[24.10.7]"
+  },
+  "webServices": [],
+  "entitiesStores": [],
+  "schemaVersion": "4.0",
+  "studioVersion": "24.10.0.0",
+  "projectVersion": "1.0.0",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": true,
+    "isAttended": false,
+    "requiresUserInteraction": false,
+    "supportsPersistence": false,
+    "workflowSerialization": "DataContract",
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": true,
+    "pipType": "ChildSession"
+  },
+  "designOptions": {
+    "projectProfile": "Development",
+    "outputType": "Process",
+    "libraryOptions": {
+      "includeOriginalXaml": false,
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
+  },
+  "expressionLanguage": "CSharp",
+  "entryPoints": [
+    {
+      "filePath": "Main.cs",
+      "uniqueId": "bb23fbf5-9b4e-40c7-94be-6a33b00f5df9",
+      "input": [
+        {
+          "name": "invoicesCsvPath",
+          "type": "System.String",
+          "required": false,
+          "hasDefault": true
+        },
+        {
+          "name": "sapVendorsCsvPath",
+          "type": "System.String",
+          "required": false,
+          "hasDefault": true
+        },
+        {
+          "name": "outputFolder",
+          "type": "System.String",
+          "required": false,
+          "hasDefault": true
+        },
+        {
+          "name": "configPath",
+          "type": "System.String",
+          "required": false,
+          "hasDefault": true
+        },
+        {
+          "name": "autoMatchThreshold",
+          "type": "System.Double",
+          "required": false,
+          "hasDefault": true
+        },
+        {
+          "name": "reviewThreshold",
+          "type": "System.Double",
+          "required": false,
+          "hasDefault": true
+        }
+      ],
+      "output": [
+        {
+          "name": "result",
+          "type": "System.String"
+        }
+      ]
+    }
+  ],
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {},
+  "targetFramework": "Windows"
+}

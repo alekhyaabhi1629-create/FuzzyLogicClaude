@@ -1,0 +1,21 @@
+InvoiceId,VendorName,TaxId,VatId,Country,City
+INV-1001,MUELLER PRAEZISIONSTECHNIK GMBH,,,DE,Stuttgart
+INV-1002,Acme Europe Distribution BV,,,NL,Rotterdam
+INV-1003,Acme Europe,,,NL,
+INV-1004,IBM,,,US,
+INV-1005,Nordwind Logistik GmbH und Co KG,,,DE,Hamburg
+INV-1006,Delta Logistics Ltd,,,GB,Manchester
+INV-1007,Delta Logistic Ltd,,,GB,
+INV-1008,Sicmens AG,,,DE,Munchen
+INV-1009,Sigma 3 Labs Inc,,,US,Boston
+INV-1010,Kowalski i Synowie Sp z o o,,,PL,Warszawa
+INV-1011,Bright Consultancy Partners,,,US,Chicago
+INV-1012,Etablissements Dupont et Fils,,,FR,Lyon
+INV-1013,Fabrikam Manufacturing Holdings Pte Ltd,,,SG,Singapore
+INV-1014,Northwind Traders,,,AU,Sydney
+INV-1015,Contoso Pharma AG,,,CH,Basel
+INV-1016,Helix Industrial Group Ltd,GB556677889,,GB,Birmingham
+INV-1017,Zenith Elektro Technik GmbH,,,DE,Köln
+INV-1018,Pacific Rim Trading,,,US,Los Angeles
+INV-1019,Global Tech Solutions Ltd,,,,
+INV-1020,Quantum Widgets Unlimited,,,ZA,Cape Town

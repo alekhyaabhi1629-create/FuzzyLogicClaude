@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A thin console wrapper around the same engine sources the UiPath project compiles.
+    The files under VendorMatching/Code have no UiPath dependencies, so they are linked in
+    directly rather than duplicated: there is exactly one implementation to maintain, and it
+    can be exercised on Linux and macOS agents that have no Studio installed.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>EngineHarness</AssemblyName>
+    <RootNamespace>VendorMatching.Harness</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\..\VendorMatching\Code\*.cs" LinkBase="Engine" />
+  </ItemGroup>
+
+</Project>

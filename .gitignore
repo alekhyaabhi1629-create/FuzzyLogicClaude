@@ -1,0 +1,25 @@
+# UiPath
+.local/
+.settings/
+.objects/
+.screenshots/
+.tmh/
+.project/
+*.user
+
+# UiPath CLI + build output
+.uipcli/
+artifacts/
+*.nupkg
+
+# .NET
+bin/
+obj/
+*.binlog
+
+# Editors / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

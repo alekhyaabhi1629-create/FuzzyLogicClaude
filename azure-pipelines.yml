@@ -1,0 +1,103 @@
+# Azure DevOps pipeline for the vendor matching process.
+#
+# Variable group 'uipath-orchestrator' is expected to supply:
+#   orchestratorUrl, orchestratorTenant, orchestratorAccount, orchestratorFolder
+#   uipathAppId, uipathAppSecret   (mark the secret as secret in the variable group)
+
+trigger:
+  branches:
+    include:
+      - main
+      - claude/*
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  packageVersion: '1.0.$(Build.BuildId)'
+
+stages:
+  - stage: Test
+    displayName: Engine self-tests
+    jobs:
+      - job: SelfTests
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              packageType: sdk
+              version: '8.0.x'
+
+          - script: >
+              dotnet run --project tools/EngineHarness/EngineHarness.csproj -c Release --
+              test --data VendorMatching/Data
+            displayName: Run self-tests
+
+          - script: >
+              dotnet run --project tools/EngineHarness/EngineHarness.csproj -c Release --
+              match
+              --invoices VendorMatching/Data/invoices.sample.csv
+              --sap VendorMatching/Data/sap_vendors.sample.csv
+              --config VendorMatching/Config/matching-config.json
+              --output $(Build.ArtifactStagingDirectory)/sample-output
+            displayName: Match the sample data
+
+          - publish: $(Build.ArtifactStagingDirectory)/sample-output
+            artifact: sample-match-output
+
+  - stage: Package
+    displayName: Analyze and pack
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: Pack
+        pool:
+          vmImage: windows-latest
+        steps:
+          - pwsh: ./build/install-uipcli.ps1
+            displayName: Install UiPath CLI
+
+          - pwsh: ./build/build.ps1 -PackageVersion "$(packageVersion)" -OutputFolder "$(Build.ArtifactStagingDirectory)"
+            displayName: Analyze and pack
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: vendor-matching-package
+
+  - stage: Deploy
+    displayName: Deploy to Orchestrator
+    dependsOn: Package
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: uipath-orchestrator
+    jobs:
+      - deployment: DeployProcess
+        pool:
+          vmImage: windows-latest
+        environment: orchestrator
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - download: current
+                  artifact: vendor-matching-package
+
+                - pwsh: ./build/install-uipcli.ps1
+                  displayName: Install UiPath CLI
+
+                - pwsh: >
+                    ./build/deploy.ps1
+                    -OrchestratorUrl "$(orchestratorUrl)"
+                    -Tenant "$(orchestratorTenant)"
+                    -AccountName "$(orchestratorAccount)"
+                    -OrganizationUnit "$(orchestratorFolder)"
+                    -PackagesFolder "$(Pipeline.Workspace)/vendor-matching-package"
+                    -CreateProcess
+                  displayName: Deploy
+                  env:
+                    UIPATH_APP_ID: $(uipathAppId)
+                    UIPATH_APP_SECRET: $(uipathAppSecret)

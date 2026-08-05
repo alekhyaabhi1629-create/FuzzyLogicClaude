@@ -1,0 +1,110 @@
+name: UiPath CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy the packed process to Orchestrator'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  # The engine has no UiPath dependencies, so its tests run on a Linux agent in seconds.
+  # This is the gate that catches matching regressions.
+  engine-tests:
+    name: Engine self-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run self-tests
+        run: >
+          dotnet run --project tools/EngineHarness/EngineHarness.csproj -c Release --
+          test --data VendorMatching/Data
+
+      - name: Match the sample data
+        run: >
+          dotnet run --project tools/EngineHarness/EngineHarness.csproj -c Release --
+          match
+          --invoices VendorMatching/Data/invoices.sample.csv
+          --sap VendorMatching/Data/sap_vendors.sample.csv
+          --config VendorMatching/Config/matching-config.json
+          --output artifacts/output
+
+      - name: Upload sample output
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-match-output
+          path: artifacts/output/
+          if-no-files-found: error
+
+  # Workflow Analyzer plus pack, using the UiPath CLI. Windows because UiPath.CLI.Windows is
+  # the build that ships the full analyzer rule set.
+  package:
+    name: Analyze and pack
+    runs-on: windows-latest
+    needs: engine-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UiPath CLI
+        shell: pwsh
+        run: ./build/install-uipcli.ps1
+
+      - name: Analyze and pack
+        shell: pwsh
+        run: ./build/build.ps1 -PackageVersion "1.0.${{ github.run_number }}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendor-matching-package
+          path: |
+            artifacts/*.nupkg
+            artifacts/analyzer-results.json
+          if-no-files-found: error
+
+  # Manual only: run the workflow from the Actions tab with "deploy" ticked.
+  # Configure ORCHESTRATOR_URL / ORCHESTRATOR_TENANT / ORCHESTRATOR_ACCOUNT / ORCHESTRATOR_FOLDER
+  # as repository variables and UIPATH_APP_ID / UIPATH_APP_SECRET as secrets.
+  deploy:
+    name: Deploy to Orchestrator
+    runs-on: windows-latest
+    needs: package
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    environment: orchestrator
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: vendor-matching-package
+          path: artifacts
+
+      - name: Install UiPath CLI
+        shell: pwsh
+        run: ./build/install-uipcli.ps1
+
+      - name: Deploy
+        shell: pwsh
+        env:
+          UIPATH_APP_ID: ${{ secrets.UIPATH_APP_ID }}
+          UIPATH_APP_SECRET: ${{ secrets.UIPATH_APP_SECRET }}
+        run: >
+          ./build/deploy.ps1
+          -OrchestratorUrl "${{ vars.ORCHESTRATOR_URL }}"
+          -Tenant "${{ vars.ORCHESTRATOR_TENANT }}"
+          -AccountName "${{ vars.ORCHESTRATOR_ACCOUNT }}"
+          -OrganizationUnit "${{ vars.ORCHESTRATOR_FOLDER }}"
+          -CreateProcess

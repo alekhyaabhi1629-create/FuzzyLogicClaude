@@ -1,0 +1,122 @@
+{
+  "//": "Every section is optional - anything left out falls back to MatchConfig.CreateDefault().",
+
+  "invoiceColumns": {
+    "id": [ "InvoiceId", "InvoiceNo", "InvoiceNumber", "DocumentNo", "BELNR" ],
+    "vendorName": [ "VendorName", "Vendor", "SupplierName", "Supplier", "PayeeName", "Name" ],
+    "taxId": [ "TaxId", "TaxNumber", "TIN", "STCD1" ],
+    "vatId": [ "VatId", "VATNumber", "VAT", "STCEG" ],
+    "country": [ "Country", "CountryCode", "LAND1" ],
+    "city": [ "City", "Town", "ORT01" ]
+  },
+
+  "sapColumns": {
+    "code": [ "LIFNR", "VendorCode", "VendorNo", "SupplierCode", "Account" ],
+    "name": [ "NAME1", "VendorName", "Name", "SupplierName" ],
+    "name2": [ "NAME2", "VendorName2", "Name2" ],
+    "taxId": [ "STCD1", "TaxId", "TaxNumber", "TIN" ],
+    "vatId": [ "STCEG", "VatId", "VATNumber", "VAT" ],
+    "country": [ "LAND1", "Country", "CountryCode" ],
+    "city": [ "ORT01", "City", "Town" ],
+    "blocked": [ "LOEVM", "SPERR", "Blocked", "DeletionFlag" ]
+  },
+
+  "thresholds": {
+    "autoMatch": 90.0,
+    "review": 75.0,
+    "ambiguityMargin": 2.0
+  },
+
+  "weights": {
+    "levenshtein": 0.20,
+    "jaroWinkler": 0.20,
+    "tokenSort": 0.25,
+    "tokenSet": 0.25,
+    "partial": 0.10
+  },
+
+  "shortcutFactors": {
+    "tokenSet": 0.92,
+    "tokenSort": 0.97,
+    "partial": 0.87,
+    "minimumTokens": 2
+  },
+
+  "adjustments": {
+    "countryMatchBonus": 2.0,
+    "countryMismatchPenalty": 6.0,
+    "cityMatchBonus": 3.0,
+    "taxIdSuffixBonus": 5.0,
+    "digitMismatchPenalty": 15.0,
+    "acronymScore": 95.0,
+    "excludeBlockedVendors": true
+  },
+
+  "index": {
+    "maxTokenDocumentFrequency": 0.05,
+    "minTokenDocumentFrequency": 20,
+    "maxCandidatesPerInvoice": 200,
+    "prefixKeyLength": 4,
+    "fullScanFallback": true,
+    "fullScanMaxVendors": 20000
+  },
+
+  "alternativesToKeep": 2,
+
+  "legalForms": [
+    "INC", "INCORPORATED", "LLC", "LLP", "LP", "LTD", "LTDA", "LIMITED",
+    "CORP", "CORPORATION", "CO", "COMPANY", "PLC", "PC",
+    "GMBH", "MBH", "AG", "AKTIENGESELLSCHAFT", "KG", "KGAA", "OHG", "GBR", "EG", "EV",
+    "SA", "SAS", "SARL", "SASU", "SNC", "SCA", "SPA", "SRL", "SRLS",
+    "BV", "NV", "CV", "VOF",
+    "AB", "ASA", "AS", "OY", "OYJ", "APS",
+    "PTE", "PTY", "PVT", "PRIVATE", "SDN", "BHD",
+    "KK", "GK", "YK", "ZRT", "KFT", "BT", "DOO", "DD",
+    "SP", "ZOO", "SPZOO", "OO", "AD",
+    "JSC", "PJSC", "OAO", "OOO", "ZAO", "TOO",
+    "EIRL", "SAB", "SAPI", "TBK", "PT"
+  ],
+
+  "noiseWords": [ "THE", "AND", "UND", "ET", "OF", "DE", "DU", "DES", "LA", "LE", "EL" ],
+
+  "aliases": {
+    "INTL": "INTERNATIONAL",
+    "INTERNAT": "INTERNATIONAL",
+    "NATL": "NATIONAL",
+    "MFG": "MANUFACTURING",
+    "MFRS": "MANUFACTURERS",
+    "SVC": "SERVICES",
+    "SVCS": "SERVICES",
+    "SERVICE": "SERVICES",
+    "SOLN": "SOLUTIONS",
+    "SOLNS": "SOLUTIONS",
+    "SOLUTION": "SOLUTIONS",
+    "SYS": "SYSTEMS",
+    "SYSTEM": "SYSTEMS",
+    "TECHNOLOGY": "TECHNOLOGIES",
+    "TECHNOLOGIE": "TECHNOLOGIES",
+    "IND": "INDUSTRIES",
+    "INDUSTRY": "INDUSTRIES",
+    "INDUSTRIAL": "INDUSTRIES",
+    "DIST": "DISTRIBUTION",
+    "DISTR": "DISTRIBUTION",
+    "ELEC": "ELECTRIC",
+    "ELECTRICAL": "ELECTRIC",
+    "ENG": "ENGINEERING",
+    "EQUIP": "EQUIPMENT",
+    "EQP": "EQUIPMENT",
+    "MGMT": "MANAGEMENT",
+    "TRANSP": "TRANSPORT",
+    "TRANSPORTATION": "TRANSPORT",
+    "PHARMA": "PHARMACEUTICALS",
+    "PHARMACEUTICAL": "PHARMACEUTICALS",
+    "LAB": "LABORATORIES",
+    "LABS": "LABORATORIES",
+    "LABORATORY": "LABORATORIES",
+    "CONSULTING": "CONSULTANTS",
+    "CONSULTANCY": "CONSULTANTS",
+    "ASSOC": "ASSOCIATES",
+    "ASSOCIATE": "ASSOCIATES",
+    "BROS": "BROTHERS"
+  }
+}
