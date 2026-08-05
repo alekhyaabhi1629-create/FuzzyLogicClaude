@@ -4,6 +4,3 @@
 .screenshots/
 *.cs.json
 .codedworkflows/
-
-# Build output
-FuzzyMatch/Output/*.xlsx

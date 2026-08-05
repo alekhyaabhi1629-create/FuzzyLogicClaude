@@ -1,45 +1,53 @@
 # FuzzyMatch — RPA flow for fuzzy matching
 
-Reconciles a **source** list against a **reference (master)** list when the two do not
-share a key and the names do not match exactly. Every source row gets a best-guess
-match, a 0–100 similarity score, and a classification a human can act on.
+Matches a **string value** against a **delimited list of candidate strings** and
+returns the best match, a 0–100 similarity score, and a verdict a human can act on.
 
-## Scenario this implements
+Everything crosses the workflow boundary as plain strings and numbers — no Excel,
+no files, no DataTables. Values go in through string variables and come back out
+as string arguments, so this drops into any caller: an Orchestrator asset, a queue
+item field, a scraped UI value, an API response, or another workflow.
 
-Two spreadsheets, no shared ID:
-
-- `Data/Source.xlsx` — the incoming records (invoices, statements, a supplier feed)
-- `Data/Reference.xlsx` — the master list to match against
-
-The process scores each source name against every reference name and writes
-`Output/MatchResults.xlsx` with one row per source record:
+## Verdicts
 
 | Outcome | Meaning | Default band |
 |---|---|---|
-| `AutoMatched` | Safe to post without a human | score ≥ 90 |
+| `AutoMatched` | Safe to use without a human | score ≥ 90 |
 | `NeedsReview` | Plausible, but a person should confirm | 75 ≤ score < 90 |
-| `NoMatch` | Nothing credible in the reference list | score < 75 |
+| `NoMatch` | Nothing credible in the candidate list | score < 75 |
 
 Both thresholds are workflow arguments — no code change to retune them.
+`out_Outcome` is returned as a **string**, so a caller can branch on it with a
+plain `If` or `Switch` without needing the enum type in scope.
 
 ## Project layout
 
 ```
 FuzzyMatch/
-├── Main.xaml                  # Orchestration: read → match → write → log
-├── MatchRecords.cs            # Coded workflow: DataTable in, results + counts out
+├── Main.xaml                  # Orchestration: string vars → invoke matcher → log verdict
+├── MatchValue.cs              # Coded workflow: strings in, match + score + outcome out
 ├── FuzzyMatchEngine.cs        # Coded source file: normalization + the three scorers
 ├── FuzzyMatchModels.cs        # Coded source file: options, records, results, enum
-├── TestFuzzyMatchEngine.cs    # Coded test case: 14 assertions on the scoring logic
-├── Data/Source.xlsx           # Sample input — exercises all three outcomes
-├── Data/Reference.xlsx        # Sample master list
-└── Output/                    # MatchResults.xlsx is written here
+└── TestFuzzyMatchEngine.cs    # Coded test case: 14 assertions on the scoring logic
 ```
 
-The split is deliberate: `Main.xaml` stays readable as a visual flow, while the
-algorithmic part (three string scorers, a weighted blend, a pre-filter and a
-runner-up track) lives in C#, where it is also unit-testable. Expressing it in
-XAML would take dozens of `Assign` and `If` activities.
+`Main.xaml` stays readable as a visual flow; the algorithmic part (three string
+scorers, a weighted blend, a pre-filter and a runner-up track) lives in C# where
+it is also unit-testable. Expressing it in XAML would take dozens of `Assign` and
+`If` activities.
+
+## How the flow works
+
+1. Three `Assign` activities load the inputs into **String variables** —
+   `strSourceValue`, `strReferenceValues`, `strDelimiter`. The delimiter falls back
+   to `;` when blank. To hard-code a test value in Studio, edit these Assigns and
+   ignore the arguments entirely.
+2. `Invoke Workflow File` calls `MatchValue.cs`, passing the string variables.
+3. The five outputs bind straight to the workflow's out-arguments.
+4. The result is logged, and anything that is not `AutoMatched` also logs at
+   `Warn` level so it surfaces in Orchestrator.
+5. The whole thing sits in a Try/Catch that logs at `Error` and rethrows,
+   preserving the stack trace.
 
 ## How the score is built
 
@@ -62,17 +70,9 @@ Jaro-Winkler are both position-sensitive, so without the sorted pass a pure
 reordering like `Smith, John` vs `John Smith` scores ~50 despite being the same
 person. With it, that pair scores 100.
 
-Each result also carries the **runner-up** value and score, and the `Margin`
-between them. A 96 with a margin of 1 means two reference rows look alike — worth
-a human eye even though it cleared the auto-match bar.
-
-## Results columns
-
-`SourceRow`, `SourceValue`, `MatchedValue`, `MatchedReferenceRow`, `Score`,
-`Outcome`, `RunnerUpValue`, `RunnerUpScore`, `Margin`.
-
-Row numbers are spreadsheet row numbers (header counted), so a reviewer can jump
-straight to the row.
+Each result also carries the **runner-up** value and the `Margin` between it and
+the winner. A 96 with a margin of 1 means two candidates look alike — worth a
+human eye even though it cleared the auto-match bar.
 
 ## Run it
 
@@ -80,56 +80,60 @@ straight to the row.
 uip rpa run "Main.xaml" --project-dir "." --output json
 ```
 
-Sample data runs end to end with no arguments. To point it at real files:
+The built-in defaults run standalone. To pass your own values:
 
 ```bash
 uip rpa run "Main.xaml" --project-dir "." --output json \
-  --input-arguments '{"in_SourceWorkbook":"C:\\data\\suppliers.xlsx","in_SourceMatchColumn":"Supplier","in_ReferenceWorkbook":"C:\\data\\master.xlsx","in_ReferenceMatchColumn":"Name","in_AutoMatchThreshold":92,"in_ReviewThreshold":80}'
+  --input-arguments '{"in_SourceValue":"Jhon Smith","in_ReferenceValues":"John Smith|Jane Smith|Jon Smyth","in_Delimiter":"|","in_AutoMatchThreshold":92,"in_ReviewThreshold":80}'
 ```
 
 ### Arguments
 
-| Argument | Default | Notes |
+| Argument | Type | Default | Notes |
+|---|---|---|---|
+| `in_SourceValue` | String | `ACME FOODS LTD.` | The value to match |
+| `in_ReferenceValues` | String | 5 sample companies | Candidates, delimiter-separated |
+| `in_Delimiter` | String | `;` | Falls back to `;` when blank |
+| `in_AutoMatchThreshold` | Double | `90` | |
+| `in_ReviewThreshold` | Double | `75` | Must be ≤ auto-match threshold |
+
+### Outputs
+
+| Argument | Type | Notes |
 |---|---|---|
-| `in_SourceWorkbook` | `Data\Source.xlsx` | Local path |
-| `in_SourceSheet` | `Sheet1` | |
-| `in_SourceMatchColumn` | `CustomerName` | Column header to match on |
-| `in_ReferenceWorkbook` | `Data\Reference.xlsx` | |
-| `in_ReferenceSheet` | `Sheet1` | |
-| `in_ReferenceMatchColumn` | `CustomerName` | |
-| `in_OutputWorkbook` | `Output\MatchResults.xlsx` | Created if absent; folder must exist |
-| `in_OutputSheet` | `MatchResults` | Created if absent |
-| `in_AutoMatchThreshold` | `90` | |
-| `in_ReviewThreshold` | `75` | Must be ≤ auto-match threshold |
+| `out_MatchedValue` | String | Empty when the outcome is `NoMatch` |
+| `out_Score` | Double | 0–100 |
+| `out_Outcome` | String | `AutoMatched` / `NeedsReview` / `NoMatch` |
+| `out_RunnerUpValue` | String | Second-best candidate |
+| `out_Margin` | Double | Winner's score minus runner-up's |
 
-Outputs: `out_AutoMatchedCount`, `out_NeedsReviewCount`, `out_NoMatchCount`.
+## Expected result on the defaults
 
-## Expected result on the sample data
+Source `ACME FOODS LTD.` against the five bundled candidates:
+
+```
+matched   : Acme Foods Limited
+score     : 100.00
+outcome   : AutoMatched
+runner-up : Acme Fabrics Limited (67.90)
+margin    : 32.10
+```
+
+Other values against the same candidate list:
 
 | Source | Best match | Score | Outcome |
 |---|---|---|---|
-| `ACME FOODS LTD.` | Acme Foods Limited | 100.00 | AutoMatched |
 | `Zenith Logistics` | Zenith Logistics LLC | 100.00 | AutoMatched |
-| `Nordwind Handels G.m.b.H.` | Nordwind Handels GmbH | 76.00 | NeedsReview |
 | `Sakura Trading Company` | Sakura Trading Co | 100.00 | AutoMatched |
-| `Olivera e Filhos` | Olivera & Filhos Lda | 75.10 | NeedsReview |
-| `Bluewater Marine Svcs` | Bluewater Marine Services | 88.48 | NeedsReview |
 | `Acme Fabrcs Limited` | Acme Fabrics Limited | 94.00 | AutoMatched |
-| `Helios Renewable` | Helios Renewables PLC | 95.76 | AutoMatched |
 | `Quantum Dynamics Inc` | — | 39.20 | NoMatch |
-| *(blank)* | — | — | skipped |
-
-`G.m.b.H.` lands in review because punctuation splits it into four single-letter
-tokens rather than one. That is the intended behaviour: the process flags it
-rather than guessing. Add `"GMBH"`-style variants to
-`FuzzyMatchOptions.AdditionalNoiseTokens` if you want them auto-matched.
 
 ## Tuning
 
 - **Too many false positives** → raise `in_AutoMatchThreshold`.
-- **Too many rows in review** → lower it, or add domain noise tokens
-  (`AdditionalNoiseTokens`) so cosmetic differences stop costing points.
-- **Long reference lists** → `FuzzyMatchOptions.LengthGuardRatio` (default `0.34`)
+- **Too many rows in review** → lower it, or add domain noise tokens via
+  `FuzzyMatchOptions.AdditionalNoiseTokens` so cosmetic differences stop costing points.
+- **Long candidate lists** → `FuzzyMatchOptions.LengthGuardRatio` (default `0.34`)
   skips candidates whose length is wildly different before running the O(n·m)
   edit-distance loop. Raise it to trade recall for speed.
 - **Different data shape** → the scorer weights are on `FuzzyMatchOptions`.
@@ -137,10 +141,17 @@ rather than guessing. Add `"GMBH"`-style variants to
 
 ## Error handling
 
-Bad input data (missing column, blank reference column, `ReviewThreshold`
-above `AutoMatchThreshold`) throws `BusinessRuleException` — retrying will not fix
-a misnamed column, so it needs a human. `Main.xaml` wraps the whole flow in a
-Try/Catch that logs at `Error` level and rethrows, preserving the stack trace.
+Bad input data — blank `sourceValue`, empty `referenceValues`, a candidate list
+that splits to nothing, or `ReviewThreshold` above `AutoMatchThreshold` — throws
+`BusinessRuleException`. Retrying does not fix a bad argument, so it needs a
+human rather than a retry loop.
+
+## Matching a whole spreadsheet instead
+
+This version is deliberately Excel-free. A batch variant that reads two workbooks
+and writes a results sheet is in git history at commit `e7ba90f` — restore
+`MatchRecords.cs` from there and add `UiPath.Excel.Activities` back to
+`project.json`. The scoring engine is identical and unchanged.
 
 ## Validation status
 
@@ -155,4 +166,4 @@ uip rpa build "." --output json
 
 The scoring logic itself *was* verified: all 14 assertions in
 `TestFuzzyMatchEngine.cs` were checked against a line-by-line reference port of
-the engine before commit.
+the engine, as were the sample results above.
