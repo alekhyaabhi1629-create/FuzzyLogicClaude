@@ -1,0 +1,9 @@
+# UiPath local caches and generated artifacts
+.local/
+.settings/
+.screenshots/
+*.cs.json
+.codedworkflows/
+
+# Build output
+FuzzyMatch/Output/*.xlsx
