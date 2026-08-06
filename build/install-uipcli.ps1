@@ -7,14 +7,17 @@
     needs no manual setup. The CLI is cached: re-running is a no-op unless -Force is passed.
 
 .PARAMETER Version
-    Package version to install, e.g. 24.10.9155.31108. Defaults to the latest on the feed.
+    Exact package version to install. Defaults to the latest stable version on the feed.
+    To see what is available, open the feed index the script queries:
+      https://uipath.pkgs.visualstudio.com/Public.Feeds/_packaging/UiPath-Official/nuget/v3/flat2/uipath.cli.windows/index.json
+    Pin a version here once you have picked one, so builds stay reproducible.
 
 .PARAMETER PackageId
     UiPath.CLI.Windows for Windows agents, UiPath.CLI for the cross-platform build.
 
 .EXAMPLE
     ./build/install-uipcli.ps1
-    ./build/install-uipcli.ps1 -Version 24.10.9155.31108 -Force
+    ./build/install-uipcli.ps1 -Version <version-from-the-feed-index> -Force
 #>
 [CmdletBinding()]
 param(
